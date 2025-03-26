@@ -31,6 +31,29 @@ class DB:
             print("Ошибка при аутентификации:", e)
             return None
 
+    # Books
+    @classmethod
+    def get_books(cls):
+        try:
+            with db.cursor() as cursor:
+                cursor.execute("SELECT * FROM book")
+                return cursor.fetchall()
+        except mdb.Error as e:
+            print("Ошибка при получении книг:", e)
+            return None
+
+    @classmethod
+    def increase_book_rating(cls, book_id):
+        try:
+            with db.cursor() as cursor:
+                cursor.execute("SELECT increase_rating(%s)", (book_id,))
+                new_rating = cursor.fetchone()[0]  # Получаем новый рейтинг
+                db.commit()
+                return new_rating
+        except mdb.Error as e:
+            print("Ошибка при увеличении рейтинга книги:", e)
+            return None
+
     # Users
     @classmethod
     def take_user_check(cls, user_id):
@@ -69,18 +92,6 @@ class DB:
                 return check_id
         except mdb.Error as e:
             print("Ошибка при создании чека:", e)
-            return None
-
-    # Books
-    @classmethod
-    def get_books(cls):
-        try:
-            with db.cursor() as cursor:
-                cursor.execute("SELECT * FROM book")
-                books = cursor.fetchall()
-                return books
-        except mdb.Error as e:
-            print("Ошибка при получении списка книг:", e)
             return None
 
     # Admin

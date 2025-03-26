@@ -1,13 +1,14 @@
 -- -- Создание базы данных
--- CREATE DATABASE IF NOT EXISTS book_store;
--- USE book_store;
+CREATE DATABASE IF NOT EXISTS book_store;
+USE book_store;
 
 -- Книга. Название, цена, фото
 CREATE TABLE IF NOT EXISTS book (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
-    photo LONGBLOB
+    photo LONGBLOB,
+    rating INT NOT NULL DEFAULT 0
 );
 
 -- Пользователи. Почта, телефон, пароль, дата рождения
@@ -38,29 +39,24 @@ CREATE TABLE IF NOT EXISTS check_sale_book (
     FOREIGN KEY (book_id) REFERENCES book(id)
 );
 
--- Тестовые данные
-INSERT INTO book (title, price) VALUES
-('Book 1', 10.99),
-('Book 2', 19.99),
-('Book 3', 5.99),
-('Book 4', 12.99);
+CREATE TABLE IF NOT EXISTS logs_fs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    message TEXT,
+    mess_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-INSERT INTO users (email, phone, password, birth_date, is_admin) VALUES
-('admin@gmail.com', '123', 'password123', '1990-01-25', TRUE),
-('user@gmail.com', '123', 'password123', '2003-11-19', FALSE);
-
-INSERT INTO check_sale (user_id, sale_date) VALUES
-(1, '2023-01-01 10:00:00'),
-(2, '2023-01-02 11:00:00');
-
-INSERT INTO check_sale_book (check_id, book_id, quantity) VALUES
-(1, 1, 2),
-(1, 2, 1),
-(2, 3, 3),
-(2, 4, 1);
+-- Функции
+-- Функция 1. Увеличивает рейтинг книги на 1.
+DROP FUNCTION IF EXISTS increase_rating;
+DELIMITER //
+CREATE FUNCTION increase_rating(p_book_id INT) RETURNS INT
+BEGIN
+    UPDATE book SET rating = rating + 1 WHERE id = p_book_id;
+    RETURN (SELECT rating FROM book WHERE id = p_book_id);
+END //
+DELIMITER ;
 
 -- Хранимые процедуры
-
 -- ХП 1. Выводит почту, телефон клиента, общее количество купленных книг, общую сумму покупок за всё время.
 DROP PROCEDURE IF EXISTS get_users_info;
 DELIMITER //
@@ -100,3 +96,47 @@ BEGIN
         check_sale.user_id = p_user_id;
 END //
 DELIMITER ;
+
+-- ХП 3. Увелечение рейтинга книги.
+DROP PROCEDURE IF EXISTS increase_book_rating;
+DELIMITER //
+CREATE PROCEDURE increase_book_rating(IN p_book_id INT)
+BEGIN
+    declare rating INT;
+    SET rating = increase_rating(p_book_id);
+END //
+DELIMITER ;
+
+
+-- Триггеры
+-- Триггер 1. Логи для рейтинта книг (Обновление).
+DROP TRIGGER IF EXISTS book_rating_update;
+DELIMITER //
+CREATE TRIGGER book_rating_update
+AFTER UPDATE ON book
+FOR EACH ROW
+BEGIN
+    INSERT INTO logs_fs (message) VALUES(CONCAT('Рейтинг книги ', NEW.title, ' c ', OLD.rating, ' обновлен на ', NEW.rating));
+END //
+DELIMITER ;
+
+-- -- Тестовые данные
+-- INSERT INTO book (title, price) VALUES
+-- ('Book 1', 10.99),
+-- ('Book 2', 19.99),
+-- ('Book 3', 5.99),
+-- ('Book 4', 12.99);
+
+-- INSERT INTO users (email, phone, password, birth_date, is_admin) VALUES
+-- ('admin@gmail.com', '123', 'password123', '1990-01-25', TRUE),
+-- ('user@gmail.com', '123', 'password123', '2003-11-19', FALSE);
+
+-- INSERT INTO check_sale (user_id, sale_date) VALUES
+-- (1, '2023-01-01 10:00:00'),
+-- (2, '2023-01-02 11:00:00');
+
+-- INSERT INTO check_sale_book (check_id, book_id, quantity) VALUES
+-- (1, 1, 2),
+-- (1, 2, 1),
+-- (2, 3, 3),
+-- (2, 4, 1);
