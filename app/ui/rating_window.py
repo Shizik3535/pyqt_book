@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
-from app.database.db import DB  # Импорт базы данных
+from app.database.db import DB
 
 
 class BookWidget(QFrame):
@@ -39,7 +39,6 @@ class BookWidget(QFrame):
         <p>Цена: {price}</p>
         <p>Рейтинг: {self.rating}</p>
         """)
-
 
         # Радиокнопка для выбора книги
         self.radio_button = QRadioButton()
@@ -122,7 +121,6 @@ class RatingWindow(QWidget):
             layout.addWidget(label)
 
     def choose_book(self):
-        """Функция, вызываемая при выборе книги."""
         selected_button = self.books_button_group.checkedButton()
         if selected_button:
             book_id = int(selected_button.objectName())  # Получаем ID книги
@@ -131,6 +129,3 @@ class RatingWindow(QWidget):
             # Увеличиваем рейтинг книги
             selected_book.increment_rating()
             DB.increase_book_rating(str(book_id))
-
-            # print(f"Выбрана книга ID {book_id}, новый рейтинг: {selected_book.rating}")
-
