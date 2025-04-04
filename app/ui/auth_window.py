@@ -11,7 +11,7 @@ class AuthWindow(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Авторизация')
-        self.setGeometry(300, 300, 300, 100)
+        self.setMinimumSize()
 
         layout = QVBoxLayout()
         self.setLayout(layout)
